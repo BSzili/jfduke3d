@@ -7396,8 +7396,8 @@ void loadtmb(void)
 
 void Shutdown( void )
 {
-    SoundShutdown();
     MusicShutdown();
+    SoundShutdown();
     uninittimer();
     uninitengine();
     CONTROL_Shutdown();
@@ -7923,10 +7923,10 @@ int app_main(int argc, char const * const argv[])
         setgamemode(ScreenMode,ScreenWidth,ScreenHeight,ScreenBPP);
     }
 
-   buildprintf("Checking music inits.\n");
-   MusicStartup();
    buildprintf("Checking sound inits.\n");
    SoundStartup();
+   buildprintf("Checking music inits.\n");
+   MusicStartup();
    loadtmb();
 
 if (VOLUMEONE) {
