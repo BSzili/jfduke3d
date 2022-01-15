@@ -101,6 +101,33 @@ static unsigned int ChecksumFile(int fh, struct importgroupsmeta *cbs)
 {
     int b;
     unsigned int crc;
+#ifdef __AMIGA__
+    const int bufsize = 65536;
+    unsigned char *buf;
+    int totalSize;
+    int checkedSize = 0;
+
+    buf = malloc(bufsize);
+    if (!buf) {
+        return 0;
+    }
+
+    crc32init(&crc);
+    totalSize = lseek(fh, 0, SEEK_END);
+    lseek(fh, 0, SEEK_SET);
+    do {
+        if (cbs && cbs->cancelled(cbs->data)) return 0;
+        b = read(fh, buf, bufsize);
+        if (b > 0) crc32block(&crc, buf, b);
+        checkedSize += b;
+        const int checkedKB = checkedSize / 1024;
+        const int totalKB = totalSize / 1024;
+        buildprintf("\r(%d/%d KB %d%%)", checkedKB, totalKB, checkedKB * 100 / totalKB);
+    } while (b == bufsize);
+    buildputs("\n");
+    crc32finish(&crc);
+    free(buf);
+#else
     unsigned char buf[16384];
 
     crc32init(&crc);
@@ -111,6 +138,7 @@ static unsigned int ChecksumFile(int fh, struct importgroupsmeta *cbs)
         if (b > 0) crc32block(&crc, buf, b);
     } while (b == sizeof(buf));
     crc32finish(&crc);
+#endif
 
     return crc;
 }
@@ -252,11 +280,21 @@ enum {
 static int CopyFile(int fh, int size, const char *fname, struct importgroupsmeta *cbs)
 {
     int ofh, b=0, rv = COPYFILE_OK;
+#ifdef __AMIGA__
+    char *buf = malloc(16384);
+    if (!buf) {
+        return COPYFILE_ERR_RW;
+    }
+#else
     char buf[16384];
+#endif
 
     ofh = open(fname, O_WRONLY|O_BINARY|O_CREAT|O_EXCL, BS_IREAD|BS_IWRITE);
     if (ofh < 0) {
         if (errno == EEXIST) return COPYFILE_ERR_EXISTS;
+#ifdef __AMIGA__
+        free(buf);
+#endif
         return COPYFILE_ERR_OPEN;
     }
     lseek(fh, 0, SEEK_SET);
@@ -272,6 +310,9 @@ static int CopyFile(int fh, int size, const char *fname, struct importgroupsmeta
     close(ofh);
     if (size != lseek(fh, 0, SEEK_CUR)) rv = COPYFILE_ERR_RW;  // File not the expected length.
     if (rv != COPYFILE_OK) remove(fname);
+#ifdef __AMIGA__
+    free(buf);
+#endif
     return rv;
 }
 

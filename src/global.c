@@ -27,7 +27,9 @@ Modifications for JonoF's port by Jonathon Fowler (jf@jonof.id.au)
 
 #include "duke3d.h"
 
+#ifndef __AMIGA__
 unsigned char MusicPtr[72000*2];
+#endif
 
 short global_random;
 short neartagsector, neartagwall, neartagsprite;

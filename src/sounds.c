@@ -208,6 +208,9 @@ void MusicPause( int onf )
 void MusicSetVolume(int volume)
 {
    if (MusicIsWaveform && MusicVoice >= 0) {
+#ifdef __AMIGA__
+      FX_SetPan(MusicVoice, volume, volume, volume);
+#endif
       //FX_SetVoiceVolume(MusicVoice, volume);
    } else if (!MusicIsWaveform) {
       MUSIC_SetVolume(volume);
@@ -279,12 +282,24 @@ void playmusic(char *fn)
 	  // we've been asked to load a .mid file, but first
 	  // let's see if there's an ogg with the same base name
 	  // lying around
+#ifdef __AMIGA__
+          strcpy(extension, ".mp3");
+#else
 	  strcpy(extension, ".ogg");
+#endif
 	  fp = kopen4load(testfn, 0);
 	  if (fp >= 0) {
              free(testfn);
 	     break;
 	  }
+#ifdef __AMIGA__
+          strcpy(extension, ".wav");
+          fp = kopen4load(testfn, 0);
+          if (fp >= 0) {
+             free(testfn);
+             break;
+          }
+#endif
        }
        free(testfn);
 
@@ -296,6 +311,12 @@ void playmusic(char *fn)
 
     MusicLen = kfilelength( fp );
     MusicPtr = (char *) malloc(MusicLen);
+#ifdef __AMIGA__
+    if (!MusicPtr) {
+        OSD_Printf("Can't allocate %dKB for %s.",MusicLen/1024,fn);
+        return;
+    }
+#endif
     kread( fp, MusicPtr, MusicLen);
     kclose( fp );
     
@@ -336,6 +357,10 @@ char loadsound(unsigned short num)
 
     if(num >= NUM_SOUNDS || SoundToggle == 0) return 0;
     if (FXDevice < 0) return 0;
+
+#ifdef __AMIGA__
+    if (cachedebug) buildprintf("Sound:%d %s\n",num,sounds[num]);
+#endif
 
     fp = kopen4load(sounds[num],loadfromgrouponly);
     if(fp == -1)

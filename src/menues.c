@@ -175,6 +175,9 @@ corrupt:
 }
 
 
+#ifdef __AMIGA__
+static int ptrbuf[MAXTILES];
+#endif
 int loadplayer(signed char spot)
 {
     short k;
@@ -183,7 +186,9 @@ int loadplayer(signed char spot)
     char *fnptr;
     int fil, bv, i, j, x;
     int32 nump;
+#ifndef __AMIGA__
     int ptrbuf[MAXTILES];
+#endif
     
     assert(MAXTILES > MAXANIMATES);
     
@@ -287,7 +292,9 @@ int loadplayer(signed char spot)
     if (kdfread(&numsectors,2,1,fil) != 1) goto corrupt;
     if (kdfread(&sector[0],sizeof(sectortype),MAXSECTORS,fil) != MAXSECTORS) goto corrupt;
     if (kdfread(&sprite[0],sizeof(spritetype),MAXSPRITES,fil) != MAXSPRITES) goto corrupt;
+#ifndef __AMIGA__
     if (kdfread(&spriteext[0],sizeof(spriteexttype),MAXSPRITES,fil) != MAXSPRITES) goto corrupt;
+#endif
     if (kdfread(&headspritesect[0],2,MAXSECTORS+1,fil) != MAXSECTORS+1) goto corrupt;
     if (kdfread(&prevspritesect[0],2,MAXSPRITES,fil) != MAXSPRITES) goto corrupt;
     if (kdfread(&nextspritesect[0],2,MAXSPRITES,fil) != MAXSPRITES) goto corrupt;
@@ -496,7 +503,9 @@ int saveplayer(signed char spot)
     char *fnptr;
     FILE *fil;
     int bv = BYTEVERSION;
+#ifndef __AMIGA__
     int ptrbuf[MAXTILES];
+#endif
 
     assert(MAXTILES > MAXANIMATES);
     
@@ -557,7 +566,9 @@ int saveplayer(signed char spot)
     dfwrite(&numsectors,2,1,fil);
     dfwrite(&sector[0],sizeof(sectortype),MAXSECTORS,fil);
     dfwrite(&sprite[0],sizeof(spritetype),MAXSPRITES,fil);
+#ifndef __AMIGA__
     dfwrite(&spriteext[0],sizeof(spriteexttype),MAXSPRITES,fil);
+#endif
     dfwrite(&headspritesect[0],2,MAXSECTORS+1,fil);
     dfwrite(&prevspritesect[0],2,MAXSPRITES,fil);
     dfwrite(&nextspritesect[0],2,MAXSPRITES,fil);
@@ -2947,16 +2958,27 @@ if (PLUTOPAK) {
                 break;
             case 0:
             case 1:
+#ifdef __AMIGA__
+                if (x > 0 && joynumaxes == 0) break;
+#endif
                 cmenu(213+x);
                 break;
             case 2:
+#ifdef __AMIGA__
+                if (joynumaxes == 0) break;
+#endif
                 cmenu(220);
                 break;
         }
 
         menutext(160,100-18,0,0,"EDIT BUTTONS");
+#ifdef __AMIGA__
+        menutext(160,100,0,(joynumaxes == 0),"EDIT AXES");
+        menutext(160,100+18,0,(joynumaxes == 0),"DEAD ZONES");
+#else
         menutext(160,100,0,0,"EDIT AXES");
         menutext(160,100+18,0,0,"DEAD ZONES");
+#endif
 
         break;
 

@@ -86,6 +86,13 @@ void cachespritenum(short i)
             for(j = TOILETWATER; j < (TOILETWATER+4); j++) {
                 tloadtile(j,1);
         }
+#ifdef __AMIGA__
+        case WATERFOUNTAIN:
+            tloadtile(WATERFOUNTAINBROKE,1);
+            for(j = TOILETWATER; j < (TOILETWATER+4); j++)
+                tloadtile(j,1);
+            maxc = 3;
+#endif
             break;
         case RUBBERCAN:
             maxc = 2;
@@ -102,10 +109,18 @@ void cachespritenum(short i)
         case LIZTROOPJETPACK:
         case LIZTROOPONTOILET:
         case LIZTROOPDUCKING:
+#ifdef __AMIGA__
+            for(j = LIZTROOP; j < (LIZTROOP+76); j++) {
+#else
             for(j = LIZTROOP; j < (LIZTROOP+72); j++) {
+#endif
                 tloadtile(j,1);
         }
+#ifdef __AMIGA__
+            for(j=HEADJIB1;j<LEGJIB1+8;j++) {
+#else
             for(j=HEADJIB1;j<LEGJIB1+3;j++) {
+#endif
                 tloadtile(j,1);
         }
             maxc = 0;
@@ -118,15 +133,34 @@ void cachespritenum(short i)
             break;
         case NEWBEAST:
         case NEWBEASTSTAYPUT:
+#ifdef __AMIGA__
+            maxc = 94;
+#else
             maxc = 90;
+#endif
             break;
         case BOSS1:
+#ifdef __AMIGA__
+            maxc = 56;
+            break;
+#endif
         case BOSS2:
+#ifdef __AMIGA__
+            maxc = 48;
+            break;
+#endif
         case BOSS3:
+#ifdef __AMIGA__
+            maxc = 49;
+#else
             maxc = 30;
+#endif
             break;
         case OCTABRAIN:
         case OCTABRAINSTAYPUT:
+#ifdef __AMIGA__
+            for (j=COOLEXPLOSION1; j<=COOLEXPLOSION1+19; j++) tloadtile(j,1);
+#endif
         case COMMANDER:
         case COMMANDERSTAYPUT:
             maxc = 38;
@@ -139,7 +173,11 @@ void cachespritenum(short i)
             maxc = 61;
             break;
         case SHARK:
+#ifdef __AMIGA__
+            maxc = 39;
+#else
             maxc = 30;
+#endif
             break;
         case LIZMAN:
         case LIZMANSPITTING:
@@ -148,6 +186,10 @@ void cachespritenum(short i)
             for(j=LIZMANHEAD1;j<LIZMANLEG1+3;j++) {
                 tloadtile(j,1);
         }
+#ifdef __AMIGA__
+            for(j=SPIT;j<SPIT+3;j++)
+                tloadtile(j,1);
+#endif
             maxc = 80;
             break;
         case APLAYER:
@@ -159,6 +201,10 @@ void cachespritenum(short i)
                     tloadtile(j,1);
         }
             }
+#ifdef __AMIGA__
+            for(j=APLAYERTOP;j<APLAYERTOP+4;j++)
+                tloadtile(j,1);
+#endif
             break;
         case ATOMICHEALTH:
             maxc = 14;
@@ -175,6 +221,128 @@ void cachespritenum(short i)
         case CAMERA1:
             maxc = 5;
             break;
+#ifdef __AMIGA__
+        case CHAIR1:
+        case CHAIR2:
+            tloadtile(BROKENCHAIR,1);
+            break;
+        case RAT:
+            maxc = 5;
+            break;
+        case EGG:
+            maxc = 3;
+            for (j=GREENSLIME; j<=GREENSLIME+8; j++) tloadtile(j,1);
+            break;
+        case GREENSLIME:
+            maxc = 8;
+            break;
+        case ROTATEGUN:
+            maxc = 5;
+            for (j=ROTATEGUN-10; j<=ROTATEGUN-1; j++) tloadtile(j,1);
+            break;
+        case HOLODUKE:
+            maxc = 4;
+            break;
+        case STATUE:
+            tloadtile(STATUEFLASH,1);
+            break;
+        case FEM2:
+            tloadtile(BARBROKE,1);
+            break;
+        case FEM5:
+        case FEM8:
+            tloadtile(BLOODYPOLE,1);
+            break;
+        case FEM6:
+            tloadtile(FEM6PAD,1);
+            break;
+        case CLOCK:
+            tloadtile(BROKENCLOCK,1);
+            break;
+        case GUMBALLMACHINE:
+            tloadtile(GUMBALLMACHINEBROKE,1);
+            break;
+        case DOLPHIN1:
+            tloadtile(DOLPHIN2,1);
+            break;
+        case FETUS:
+            tloadtile(FETUSBROKE,1);
+            break;
+        case HYDROPLANT:
+            tloadtile(BROKEHYDROPLANT,1);
+            break;
+        case GRATE1:
+            tloadtile(BGRATE1,1);
+            break;
+        case CIRCLEPANNEL:
+            tloadtile(CIRCLEPANNELBROKE,1);
+            break;
+        case PANNEL1:
+        case PANNEL2:
+            tloadtile(BPANNEL1,1);
+            break;
+        case PANNEL3:
+            tloadtile(BPANNEL3,1);
+            break;
+        case PIPE1:
+            tloadtile(PIPE1B,1);
+            break;
+        case PIPE2:
+            tloadtile(PIPE2B,1);
+            break;
+        case PIPE3:
+            tloadtile(PIPE3B,1);
+            break;
+        case PIPE4:
+            tloadtile(PIPE4B,1);
+            break;
+        case PIPE5:
+            tloadtile(PIPE5B,1);
+            break;
+        case PIPE6:
+            tloadtile(PIPE6B,1);
+            break;
+        case BOLT1:
+            maxc = 4;
+            break;
+        case SIDEBOLT1:
+            maxc = 4;
+            break;
+        case STEAM:
+            maxc = 5;
+            break;
+        case CEILINGSTEAM:
+            maxc = 5;
+            break;
+        case ALIENSWITCH:
+            maxc = 2;
+            break;
+        case ACCESSSWITCH:
+        case ACCESSSWITCH2:
+            tloadtile(HANDHOLDINGACCESS,1);
+            for (j=HANDHOLDINGLASER; j<=HANDHOLDINGLASER+3; j++) tloadtile(j,1);
+        case DIPSWITCH:
+        case DIPSWITCH2:
+        case PULLSWITCH:
+        case HANDSWITCH:
+        case SLOTDOOR:
+        case LIGHTSWITCH:
+        case SPACELIGHTSWITCH:
+        case SPACEDOORSWITCH:
+        case FRANKENSTINESWITCH:
+        case LIGHTSWITCH2:
+        case POWERSWITCH1:
+        case LOCKSWITCH1:
+        case POWERSWITCH2:
+            maxc = 2;
+            break;
+        case FANSPRITE:
+            tloadtile(FANSPRITEBROKE, 1);
+            break;
+        case BOSS4:
+            maxc = 64;
+            break;
+#endif
     
         // caching of HUD sprites for weapons that may be in the level
         case CHAINGUNSPRITE: for (j=CHAINGUN; j<=CHAINGUN+7; j++) tloadtile(j,1); break;
@@ -232,6 +400,60 @@ void cachegoodsprites(void)
     for (i=GROWSPARK; i<GROWSPARK+4; i++) tloadtile(i,1);
     for (i=SHRINKEREXPLOSION; i<SHRINKEREXPLOSION+4; i++) tloadtile(i,1);
     for (i=MORTER; i<MORTER+4; i++) tloadtile(i,4);
+#ifdef __AMIGA__
+    // gibs and debris
+    for (i=JIBS6; i<JIBS6+8; i++) tloadtile(i,1);
+    for (i=BLOODSPLAT1; i<BLOODSPLAT1+4; i++) tloadtile(i,1);
+    tloadtile(BLOODPOOL,1);
+    for(i=BLOOD;i<BLOOD+4;i++) tloadtile(i,1);
+    for (i=GLASSPIECES; i<GLASSPIECES+3; i++) tloadtile(i,1);
+    for(i=SCRAP6;i<SCRAP6+28;i++) tloadtile(i,1);
+    for(i=FOOTPRINTS2;i<FOOTPRINTS2+3;i++) tloadtile(i,1);
+    tloadtile(OOZ,1);
+    // explosions and projectiles
+    for (i=SHOTSPARK1; i<SHOTSPARK1+4; i++) tloadtile(i,1);
+    for (i=TRANSPORTERBEAM; i<TRANSPORTERBEAM+6; i++) tloadtile(i,1); // TODO check transporters
+    for (i=TRANSPORTERSTAR; i<TRANSPORTERSTAR+6; i++) tloadtile(i,1);
+    tloadtile(FIRELASER,1);
+    for(i=EXPLOSION2BOT;i<EXPLOSION2BOT+21;i++) tloadtile(i,1);
+    // weapon and ammo
+    for(i=FIRSTGUNSPRITE;i<FIRSTGUNSPRITE+9;i++) tloadtile(i,1);
+    for(i=KNEE;i<KNEE+2;i++) tloadtile(i,1);
+    struct player_struct *p = &ps[0];
+    int weaponsprites[] = {SHOTGUNSPRITE, CHAINGUNSPRITE, RPGSPRITE, HEAVYHBOMB, SHRINKERSPRITE, DEVISTATORSPRITE, TRIPBOMBSPRITE, FREEZESPRITE, HEAVYHBOMB, SHRINKERSPRITE};
+    int weapon;
+    for ( weapon = SHOTGUN_WEAPON; weapon < MAX_WEAPONS; weapon++ )
+    {
+        if (p->gotweapon[weapon])
+        {
+            int opicnum = sprite[0].picnum;
+            sprite[0].picnum = weaponsprites[weapon - SHOTGUN_WEAPON];
+            cachespritenum(0);
+            sprite[0].picnum = opicnum;
+        }
+    }
+    //for(i=DEVISTATOR; i<=DEVISTATOR+1; i++) tloadtile(i,1);
+    tloadtile(GROWSPRITEICON,1);
+    for(i=FREEZEAMMO;i<=SHOTGUNAMMO;i++) tloadtile(i,1);
+    // HUD sprites
+    for (i=DIGITALNUM; i<DIGITALNUM+10; i++) tloadtile(i,1);
+    tloadtile(FIRSTAID_ICON,1);
+    tloadtile(HEAT_ICON,1);
+    tloadtile(BOOT_ICON,1);
+    tloadtile(JETPACK_ICON,1);
+    tloadtile(AIRTANK_ICON,1);
+    tloadtile(STEROIDS_ICON,1);
+    tloadtile(HOLODUKE_ICON,1);
+    tloadtile(ACCESS_ICON,1);
+    // water
+    tloadtile(WATERDRIP,1);
+    tloadtile(WATERBUBBLE,1); // TODO check underwater sector
+    tloadtile(WATERBUBBLEMAKER,1); // TODO check underwater sector
+    tloadtile(SCUBAMASK,1); // TODO check underwater sector
+    for(i=WATERSPLASH2;i<WATERSPLASH2+5;i++) tloadtile(i, 1); // TODO check water sector
+    // various
+
+#endif
 }
 
 char getsound(unsigned short num)
@@ -250,6 +472,9 @@ char getsound(unsigned short num)
     soundsiz[num] = l;
 
     if( (ud.level_number == 0 && ud.volume_number == 0 && (num == 189 || num == 232 || num == 99 || num == 233 || num == 17 ) ) ||
+#ifdef __AMIGA__
+        (soundm[num]&1) == 0 || // always cache non-looped large sounds
+#endif
         ( l < 12288 ) )
     {
         Sound[num].lock = 199;
@@ -299,24 +524,198 @@ void cacheit(void)
 
         if(wall[i].overpicnum >= 0) {
             tloadtile(wall[i].overpicnum, 0);
+            switch(wall[i].overpicnum)
+            {
+                case W_FORCEFIELD:
+                    for(j=0;j<3;j++)
+                        tloadtile(W_FORCEFIELD+j, 0);
+                case W_FORCEFIELD+1:
+                case W_FORCEFIELD+2:
+                case BIGFORCE:
+                    for(j=0;j<9;j++)
+                        tloadtile(FORCERIPPLE+j, 1);
+                    break;
+            }
         }
+#ifdef __AMIGA__
+        walltype *wal;
+        wal = &wall[i];
+        switch(wal->picnum)
+        {
+            case COLAMACHINE:
+            case VENDMACHINE:
+                tloadtile(wal->picnum+2, 0);
+                break;
+            case W_TECHWALL5:
+            case W_TECHWALL6:
+            case W_TECHWALL7:
+            case W_TECHWALL8:
+            case W_TECHWALL9:
+                tloadtile(wal->picnum+1, 0);
+                break;
+            case W_MILKSHELF:
+                tloadtile(W_MILKSHELFBROKE, 0);
+                break;
+            case W_TECHWALL10:
+                tloadtile(W_HITTECHWALL10, 0);
+                break;
+            case W_TECHWALL1:
+            case W_TECHWALL11:
+            case W_TECHWALL12:
+            case W_TECHWALL13:
+            case W_TECHWALL14:
+                tloadtile(W_HITTECHWALL1, 0);
+                break;
+            case W_TECHWALL15:
+                tloadtile(W_HITTECHWALL15, 0);
+                break;
+            case W_TECHWALL16:
+                tloadtile(W_HITTECHWALL16, 0);
+                break;
+                case W_TECHWALL2:
+                tloadtile(W_HITTECHWALL2, 0);
+                break;
+            case W_TECHWALL3:
+                tloadtile(W_HITTECHWALL3, 0);
+                break;
+            case W_TECHWALL4:
+                tloadtile(W_HITTECHWALL4, 0);
+                break;
+            case ATM:
+                tloadtile(ATMBROKE, 0);
+                break;
+            case WALLLIGHT1:
+                tloadtile(WALLLIGHTBUST1, 0);
+                break;
+            case WALLLIGHT2:
+                tloadtile(WALLLIGHTBUST2, 0);
+                break;
+            case WALLLIGHT3:
+                tloadtile(WALLLIGHTBUST3, 0);
+                break;
+            case WALLLIGHT4:
+                tloadtile(WALLLIGHTBUST4, 0);
+                break;
+            case GLASS:
+                for(j=0;j<6;j++)
+                    tloadtile(GLASS2+j, 0);
+                break;
+            case WATERTILE2:
+                for(j=0;j<3;j++)
+                    tloadtile(wal->picnum+j, 0);
+                break;
+            case TECHLIGHT2:
+                tloadtile(TECHLIGHTBUST2, 0);
+                break;
+            case TECHLIGHT4:
+                tloadtile(TECHLIGHTBUST4, 0);
+                break;
+            case SCREENBREAK6:
+            case SCREENBREAK7:
+            case SCREENBREAK8:
+                for(j=SCREENBREAK6;j<SCREENBREAK9;j++)
+                    tloadtile(j, 0);
+            case SCREENBREAK1:
+            case SCREENBREAK2:
+            case SCREENBREAK3:
+            case SCREENBREAK4:
+            case SCREENBREAK5:
+            case SCREENBREAK9:
+            case SCREENBREAK10:
+            case SCREENBREAK11:
+            case SCREENBREAK12:
+            case SCREENBREAK13:
+            case SCREENBREAK14:
+            case SCREENBREAK15:
+            case SCREENBREAK16:
+            case SCREENBREAK17:
+            case SCREENBREAK18:
+            case SCREENBREAK19:
+                tloadtile(SCREENBREAK6, 0);
+            case BORNTOBEWILDSCREEN:
+            case OJ:
+            case FEMPIC1:
+            case FEMPIC2:
+            case FEMPIC3:
+                for(j=0;j<3;j++)
+                    tloadtile(W_SCREENBREAK+j, 0);
+                break;
+        }
+#endif
     }
 
     for(i=0;i<numsectors;i++)
     {
         tloadtile( sector[i].floorpicnum, 0 );
         tloadtile( sector[i].ceilingpicnum, 0 );
+#ifdef __AMIGA__
+        switch (sector[i].ceilingpicnum)
+        {
+            case LA:
+                for(j=0;j<5;j++)
+                    tloadtile(sector[i].ceilingpicnum+j, 0);
+                break;
+            case MOONSKY1:
+                for(j=0;j<4;j++)
+                    tloadtile(sector[i].ceilingpicnum+j, 0);
+                break;
+            case BIGORBIT1:
+                for(j=0;j<5;j++)
+                    tloadtile(sector[i].ceilingpicnum+j, 0);
+                break;
+            case WALLLIGHT1:
+                tloadtile(WALLLIGHTBUST1, 0);
+                break;
+            case WALLLIGHT2:
+                tloadtile(WALLLIGHTBUST2, 0);
+                break;
+            case WALLLIGHT3:
+                tloadtile(WALLLIGHTBUST3, 0);
+                break;
+            case WALLLIGHT4:
+                tloadtile(WALLLIGHTBUST4, 0);
+                break;
+            case TECHLIGHT2:
+                tloadtile(TECHLIGHTBUST2, 0);
+                break;
+            case TECHLIGHT4:
+                tloadtile(TECHLIGHTBUST4, 0);
+                break;
+        }
+#else
         if( sector[i].ceilingpicnum == LA)
         {
             tloadtile(LA+1, 0);
             tloadtile(LA+2, 0);
         }
+#endif
 
         j = headspritesect[i];
         while(j >= 0)
         {
             if(sprite[j].xrepeat != 0 && sprite[j].yrepeat != 0 && (sprite[j].cstat&32768) == 0)
                 cachespritenum(j);
+#ifdef __AMIGA__
+            else if (sprite[j].picnum == RESPAWN)
+            {
+                int opicnum = sprite[j].picnum;
+                sprite[j].picnum = sprite[j].hitag;
+                cachespritenum(j);
+                sprite[j].picnum = opicnum;
+            }
+            else if (sprite[j].picnum == MUSICANDSFX)
+            {
+                if (AmbienceToggle && sprite[j].lotag < 999)
+                {
+                    int num = sprite[j].lotag;
+                    if (Sound[num].ptr == 0)
+                    {
+                        //buildprintf("%s sound %d\n", __FUNCTION__, num);
+                        getsound(num);
+                    }
+                }
+            }
+#endif
             j = nextspritesect[j];
         }
     }
@@ -359,6 +758,10 @@ void cacheit(void)
     }
 #endif
 
+#ifdef __AMIGA__
+    cachedebug = 0; // make sure it's reset for saves too
+#endif
+
     j = 0;
     for(i=0;i<MAXTILES;i++) {
         if(gotpic[i>>3] & pow2char[i&7]) {
@@ -375,6 +778,14 @@ void cacheit(void)
 
     endtime = getticks();
     buildprintf("Cache time: %dms\n", endtime-starttime);
+#ifdef __AMIGA__
+    extern int CachePrintMode;
+    if (CachePrintMode) {
+        cachedebug = 1;
+        void printfreecache(void);
+        printfreecache();
+    }
+#endif
 }
 
 

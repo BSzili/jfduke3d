@@ -884,7 +884,11 @@ void operatesectors(short sn,short ii)
                 }
                 i = nextspritestat[i];
             }
+#ifdef __AMIGA__
+            if (i<0) { OSD_Printf("WARNING: SE23 i<0!\n"); return; }    // JBF
+#else
             if (i<0) { buildprintf("WARNING: SE23 i<0!\n"); return; }    // JBF
+#endif
 
             l = sector[SECT].lotag&0x8000;
 

@@ -69,6 +69,9 @@ char firstdemofile[80] = { '\0' };
 static int netparam = 0;    // Index into argv of the first -net argument
 static int endnetparam = 0; // Index into argv following the final -net parameter.
 static int netsuccess = 0;  // Outcome of calling initmultiplayersparms().
+#ifdef __AMIGA__
+int CachePrintMode = 0;
+#endif
 
 void setstatusbarscale(int sc)
 {
@@ -436,7 +439,11 @@ void adduserquote(char *daquote)
         user_quote_time[i] = user_quote_time[i-1];
     }
     strcpy(user_quote[0],daquote);
+#ifdef __AMIGA__
+    OSD_Printf("%s\n", daquote);
+#else
     buildprintf("%s\n", daquote);
+#endif
     user_quote_time[0] = 180;
     pub = NUMPAGES;
 }
@@ -1085,6 +1092,26 @@ void caches(void)
 
 
 }
+#ifdef __AMIGA__
+void printfreecache(void)
+{
+    int i,k,j;
+
+    j = k = 0;
+    for(i=0;i<cacnum;i++)
+    {
+        if ((*cac[i].lock) < 1)
+        {
+            int leng = cac[i].leng;
+            k += leng;
+            if (leng > j)
+                j = leng;
+        }
+    }
+
+    buildprintf("free cache %dK largest %dK\n", k/1024, j/1024);
+}
+#endif
 
 
 
@@ -2038,7 +2065,11 @@ void FTA(short q,struct player_struct *p)
             p->ftq = q;
             pub = NUMPAGES;
             pus = NUMPAGES;
+#ifdef __AMIGA__
+            if (p == &ps[screenpeek]) OSD_Printf("%s\n",fta_quotes[q]);
+#else
             if (p == &ps[screenpeek]) buildprintf("%s\n",fta_quotes[q]);
+#endif
         }
     }
 }
@@ -2761,6 +2792,9 @@ void drawbackground(void)
 // If standing in sector with SE45
 // then draw viewing to SE41.
 
+#ifdef __AMIGA__
+#define se40code(x,y,z,a,h,smoothratio)
+#else
 #define FOFTILE 13
 #define FOFTILEX 32
 #define FOFTILEY 32
@@ -2906,6 +2940,7 @@ void se40code(int x,int y,int z,int a,int h, int smoothratio)
         i = nextspritestat[i];
     }
 }
+#endif
 
 static int oyrepeat=-1;
 
@@ -3236,7 +3271,9 @@ short EGS(short whatsect,int s_x,int s_y,int s_z,short s_pn,signed char s_s,sign
     if (show2dsector[SECT>>3]&(1<<(SECT&7))) show2dsprite[i>>3] |= (1<<(i&7));
     else show2dsprite[i>>3] &= ~(1<<(i&7));
 
+#ifndef __AMIGA__
     clearbufbyte(&spriteext[i], sizeof(spriteexttype), 0);
+#endif
 /*
     if(s->sectnum < 0)
     {
@@ -7001,6 +7038,11 @@ void checkcommandline(int argc, char const * const *argv)
                 else if (!Bstrcasecmp(c,"nam")) {
                     strcpy(duke3dgrp, "nam.grp");
                 }
+#ifdef __AMIGA__
+                else if (!Bstrcasecmp(c, "cacheprint")) {
+                    CachePrintMode = 1;
+                }
+#endif
                 else
                 switch(*c)
                 {
@@ -7437,6 +7479,7 @@ if (VOLUMEALL) {
 
 void loadtmb(void)
 {
+#ifndef __AMIGA__
     unsigned char tmb[8000];
     int fil, l;
 
@@ -7446,6 +7489,7 @@ void loadtmb(void)
     kread(fil,tmb,l);
     MUSIC_RegisterTimbreBank(tmb);
     kclose(fil);
+#endif
 }
 
 /*
@@ -7668,6 +7712,16 @@ int shareware = 0;
 int gametype = 0;
 const char *gameeditionname = "Unknown edition";
 
+#ifdef __AMIGA__
+#include <signal.h>
+void app_crashhandler(int signum)
+{
+    Shutdown();
+    uninitgroupfile();
+    exit(0);
+}
+#endif
+
 int app_main(int argc, char const * const argv[])
 {
     int i, j, k, l;
@@ -7682,7 +7736,7 @@ int app_main(int argc, char const * const argv[])
     }
 #endif
 
-#if defined(DATADIR)
+#if defined(DATADIR) && !defined(__AMIGA__)
     {
         const char *datadir = DATADIR;
         if (datadir && datadir[0]) {
@@ -7691,6 +7745,7 @@ int app_main(int argc, char const * const argv[])
     }
 #endif
 
+#ifndef __AMIGA__
     {
         char *supportdir = Bgetsupportdir(TRUE);
         char *appdir = Bgetappdir();
@@ -7709,6 +7764,7 @@ int app_main(int argc, char const * const argv[])
             free(supportdir);
         }
     }
+#endif
 
     checkcommandline(argc,argv);
 
@@ -7724,6 +7780,7 @@ int app_main(int argc, char const * const argv[])
         }
     }
 
+#ifndef __AMIGA__
     // creating a 'user_profiles_disabled' file in the current working
     // directory where the game was launched makes the installation
     // "portable" by writing into the working directory
@@ -7759,6 +7816,7 @@ int app_main(int argc, char const * const argv[])
             free(supportdir);
         }
     }
+#endif
 
     buildsetlogfile("duke3d.log");
 
@@ -7774,6 +7832,11 @@ int app_main(int argc, char const * const argv[])
                "There was a problem initialising the Build engine: %s", engineerrstr);
        exit(1);
     }
+
+#ifdef __AMIGA__
+    signal(SIGABRT, (void (*)(int))app_crashhandler);
+    signal(SIGINT, (void (*)(int))app_crashhandler);
+#endif
 
     configloaded = CONFIG_ReadSetup();
     if (getenv("DUKE3DGRP")) {
@@ -7941,7 +8004,9 @@ int app_main(int argc, char const * const argv[])
     }
     buildputs("\n");
 
+#ifndef __AMIGA__
     if (!loaddefinitionsfile(duke3ddef)) buildprintf("Definitions file loaded.\n");
+#endif
 
     ud.multimode = numplayers;
     if (!netsuccess && numplayers == 1 && CommandFakeMulti) {
@@ -7978,9 +8043,15 @@ int app_main(int argc, char const * const argv[])
     {
         buildprintf("Failure setting video mode %dx%dx%d %s! Attempting safer mode...\n",
                 ScreenWidth,ScreenHeight,ScreenBPP,ScreenMode?"fullscreen":"windowed");
+#ifdef __AMIGA__
+        ScreenMode = 1;
+        ScreenWidth = 320;
+        ScreenHeight = 200;
+#else
         ScreenMode = 0;
         ScreenWidth = 640;
         ScreenHeight = 480;
+#endif
         ScreenBPP = 8;
         setgamemode(ScreenMode,ScreenWidth,ScreenHeight,ScreenBPP);
     }

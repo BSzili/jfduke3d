@@ -228,6 +228,16 @@ void CONFIG_SetDefaults( void )
     ShowOpponentWeapons = 0;
     Bstrcpy(ud.rtsname, "DUKE.RTS");
     Bstrcpy(myname, "Duke");
+#ifdef __AMIGA__
+    ScreenWidth = 320;
+    ScreenHeight = 200;
+    ScreenBPP = 8;
+    NumVoices = 8;
+    NumBits = 8;
+    MixRate = 22050;
+    FXVolume = 255;
+    MusicVolume = 255;
+#endif
 
     Bstrcpy(ud.ridecule[0], "An inspiration for birth control.");
     Bstrcpy(ud.ridecule[1], "You're gonna die for that!");
