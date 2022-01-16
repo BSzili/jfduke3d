@@ -2455,8 +2455,20 @@ if (PLUTOPAK) {
             if (changesmade) {
                 // Find the next/prev video mode matching the new vidset.
                 int bestvm = newvidmode, besterr = INT_MAX, vmerr;
+#ifdef __AMIGA__
+                vm = newvidmode;
+                while (1) {
+                   vm += changesmade;
+                   if (vm < 0)
+                       vm = validmodecnt - 1;
+                   else if (vm >= validmodecnt)
+                       vm = 0;
+                   if (vm == newvidmode)
+                       break;
+#else
                 for (vm = (newvidmode + changesmade) % validmodecnt; vm != newvidmode;
                         vm = (vm + changesmade) % validmodecnt) {
+#endif
                     if ((validmode[vm].fs&1) != vidsets[newvidset].fs) continue;
                     if (validmode[vm].bpp != vidsets[newvidset].bpp) continue;
                     if (x == 0) {   // Resolution change.
