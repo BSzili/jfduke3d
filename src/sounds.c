@@ -83,7 +83,9 @@ void SoundStartup( void )
 	  gameexit(buf);
    }
 	
+#ifndef __AMIGA__
 	FXDevice = 0;
+#endif
 }
 
 /*
