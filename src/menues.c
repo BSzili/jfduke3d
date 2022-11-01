@@ -176,7 +176,8 @@ corrupt:
 
 
 #ifdef __AMIGA__
-static int ptrbuf[MAXTILES];
+#define OLDMAXTILES 9216
+static int ptrbuf[OLDMAXTILES];
 #endif
 int loadplayer(signed char spot)
 {
@@ -316,7 +317,13 @@ int loadplayer(signed char spot)
     if (kdfread(&mirrorwall[0],sizeof(short),64,fil) != 64) goto corrupt;
     if (kdfread(&mirrorsector[0],sizeof(short),64,fil) != 64) goto corrupt;
     if (kdfread(&show2dsector[0],sizeof(char),MAXSECTORS>>3,fil) != (MAXSECTORS>>3)) goto corrupt;
+#ifdef __AMIGA__
+    // save-game compatibility
+    if (kdfread(&ptrbuf[0],sizeof(char),OLDMAXTILES,fil) != OLDMAXTILES) goto corrupt;
+    memcpy(&actortype[0],&ptrbuf[0],MAXTILES);
+#else
     if (kdfread(&actortype[0],sizeof(char),MAXTILES,fil) != MAXTILES) goto corrupt;
+#endif
 
     if (kdfread(&numclouds,sizeof(numclouds),1,fil) != 1) goto corrupt;
     if (kdfread(&clouds[0],sizeof(short)<<7,1,fil) != 1) goto corrupt;
@@ -325,7 +332,12 @@ int loadplayer(signed char spot)
 
     if (kdfread(&script[0],4,MAXSCRIPTSIZE,fil) != MAXSCRIPTSIZE) goto corrupt;
 
+#ifdef __AMIGA__
+    // save-game compatibility
+    if (kdfread(&ptrbuf[0],4,OLDMAXTILES,fil) != OLDMAXTILES) goto corrupt;
+#else
     if (kdfread(&ptrbuf[0],4,MAXTILES,fil) != MAXTILES) goto corrupt;
+#endif
     for(i=0;i<MAXTILES;i++)
         if(ptrbuf[i])
         {
@@ -590,7 +602,14 @@ int saveplayer(signed char spot)
     dfwrite(&mirrorwall[0],sizeof(short),64,fil);
     dfwrite(&mirrorsector[0],sizeof(short),64,fil);
     dfwrite(&show2dsector[0],sizeof(char),MAXSECTORS>>3,fil);
+#ifdef __AMIGA__
+    // save-game compatibility
+    memset(&ptrbuf[0],0,sizeof(ptrbuf));
+    memcpy(&ptrbuf[0],&actortype[0],MAXTILES);
+    dfwrite(&ptrbuf[0],sizeof(char),OLDMAXTILES,fil);
+#else
     dfwrite(&actortype[0],sizeof(char),MAXTILES,fil);
+#endif
 
     dfwrite(&numclouds,sizeof(numclouds),1,fil);
     dfwrite(&clouds[0],sizeof(short)<<7,1,fil);
@@ -605,7 +624,12 @@ int saveplayer(signed char spot)
         {
             ptrbuf[i] = (int)((intptr_t)actorscrptr[i] - (intptr_t)&script[0]);
         }
+#ifdef __AMIGA__
+    // save-game compatibility
+    dfwrite(&ptrbuf[0],4,OLDMAXTILES,fil);
+#else
     dfwrite(&ptrbuf[0],4,MAXTILES,fil);
+#endif
 
     dfwrite(&hittype[0],sizeof(struct weaponhit),MAXSPRITES,fil);
 
