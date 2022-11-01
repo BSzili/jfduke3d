@@ -26,7 +26,11 @@ Modifications for JonoF's port by Jonathon Fowler (jf@jonof.id.au)
 //-------------------------------------------------------------------------
 
 #include "duke3d.h"
+#ifdef __AMIGA__
+#define assert(...) //buildprintf("%s:%d assert\n", __FUNCTION__, __LINE__);
+#else
 #include <assert.h>
+#endif
 
 int conversion = 13;    // by default we think we're 1.3d until compilation informs us otherwise
 
@@ -502,6 +506,12 @@ int encodescriptptr(int *scptr)
 /**
  * Decode an encoded representation of a scriptptr
  */
+#ifdef __AMIGA__
+static int *decodescriptptr_inl(int scptr);
+int *decodescriptptr(int scptr) { return decodescriptptr_inl(scptr); }
+#define decodescriptptr decodescriptptr_inl
+static
+#endif
 int *decodescriptptr(int scptr)
 {
     assert(scptr <= 0);
@@ -2108,6 +2118,10 @@ void move()
 
 char parse(void);
 
+#ifdef __AMIGA__
+#define parseifelse parseifelse_inl
+static inline
+#endif
 void parseifelse(int condition)
 {
     if( condition )
