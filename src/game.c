@@ -452,7 +452,6 @@ void adduserquote(char *daquote)
 void getpackets(void)
 {
     int i, j, k, l;
-    FILE *fp;
     int other, packbufleng;
     input *osyn, *nsyn;
 
@@ -781,7 +780,7 @@ void getpackets(void)
 extern void computergetinput(int snum, input *syn);
 void faketimerhandler()
 {
-    int i, j, k, l;
+    int i, j, k;
 //    short who;
     input *osyn, *nsyn;
 
@@ -1117,7 +1116,7 @@ void printfreecache(void)
 
 void checksync(void)
 {
-      int i, k;
+      int i;
 
       for(i=connecthead;i>=0;i=connectpoint2[i])
             if (syncvalhead[i] == syncvaltottail) break;
@@ -1349,14 +1348,11 @@ void myos(int x, int y, short tilenum, signed char shade, char orientation)
 
 void myospal(int x, int y, short tilenum, signed char shade, char orientation, char p)
 {
-    char fp;
     short a;
 
     if(orientation&4)
         a = 1024;
     else a = 0;
-
-    fp = sector[ps[screenpeek].cursectnum].floorpal;
 
     rotatesprite(x<<16,y<<16,65536L,a,tilenum,shade,p,2|orientation,windowx1,windowy1,windowx2,windowy2);
 
@@ -1381,8 +1377,10 @@ void invennum(int x,int y,unsigned char num1,char ha,unsigned char sbits)
         statusbarsprite(x+4,y,65536L,0,THREEBYFIVE+dabuf[0]-'0',ha,0,sbits,0,0,xdim-1,ydim-1);
 }
 
-void orderweaponnum(short ind,int x,int y,int UNUSED(num1), int UNUSED(num2),char ha)
+void orderweaponnum(short ind,int x,int y,int num1, int num2,char ha)
 {
+    (void)num1; (void)num2;
+
     statusbarsprite(x-7,y,65536L,0,THREEBYFIVE+ind+1,ha-10,7,10+128,0,0,xdim-1,ydim-1);
     statusbarsprite(x-3,y,65536L,0,THREEBYFIVE+10,ha,0,10+128,0,0,xdim-1,ydim-1);
 
@@ -1705,7 +1703,6 @@ void coolgaugetext(short snum)
      struct player_struct *p;
      int i, j, o, ss, u;
      short inv_percent = -1;
-     char c;
 
      p = &ps[snum];
 
@@ -2076,15 +2073,14 @@ void FTA(short q,struct player_struct *p)
 
 void showtwoscreens(void)
 {
-    short i;
-
-    if (!VOLUMEALL) {
+    if (VOLUMEONE) {
         setview(0,0,xdim-1,ydim-1);
         flushperms();
         //ps[myconnectindex].palette = palette;
         setgamepalette(&ps[myconnectindex], palette, 1);
 
         fadepal(0,0,0, 0,64,7);
+        clearallviews(0L);
         rotatesprite(0,0,65536L,0,3291,0,0,2+8+16+64, 0,0,xdim-1,ydim-1);
         IFISSOFTMODE fadepal(0,0,0, 63,0,-7); else nextpage();
 
@@ -2100,8 +2096,6 @@ void showtwoscreens(void)
 
 void gameexit(const char *t)
 {
-    short i;
-
     if(*t != 0) ps[myconnectindex].palette = &palette[0];
 
     if(numplayers > 1)
@@ -2548,7 +2542,7 @@ void displayrest(int smoothratio)
     }
 
     if(ps[myconnectindex].newowner == -1 && ud.overhead_on == 0 && ud.crosshair && ud.camerasprite == -1)
-        rotatesprite((160L-(ps[myconnectindex].look_ang>>1))<<16,100L<<16,65536L,0,CROSSHAIR,0,0,2+1,windowx1,windowy1,windowx2,windowy2);
+        rotatesprite((160-(ps[myconnectindex].look_ang>>1))<<16,100L<<16,65536L,0,CROSSHAIR,0,0,2+1,windowx1,windowy1,windowx2,windowy2);
 
     if(ps[myconnectindex].gm&MODE_TYPE)
         typemode();
@@ -2599,7 +2593,7 @@ void displayrest(int smoothratio)
 void view(struct player_struct *pp, int *vx, int *vy,int *vz,short *vsectnum, short ang, short horiz)
 {
      spritetype *sp;
-     int i, nx, ny, nz, hx, hy, hz, hitx, hity, hitz;
+     int i, nx, ny, nz, hx, hy, hitx, hity, hitz;
      short bakcstat, hitsect, hitwall, hitsprite, daang;
 
      nx = (sintable[(ang+1536)&2047]>>4);
@@ -2946,10 +2940,10 @@ static int oyrepeat=-1;
 
 void displayrooms(short snum,int smoothratio)
 {
-    int cposx,cposy,cposz,dst,j,fz,cz,hz,lz;
-    short sect, cang, k, choriz,tsect;
+    int cposx,cposy,cposz,dst,j,fz,cz;
+    short sect, cang, k, choriz;
     struct player_struct *p;
-    int tposx,tposy,tposz,dx,dy,thoriz,i;
+    int tposx,tposy,i;
     short tang;
     int tiltcx,tiltcy,tiltcs=0; // JBF 20030807
 
@@ -4970,8 +4964,9 @@ short spawn( short j, short pn )
                             }
                             if(j == MAXSPRITES)
                             {
-                                sprintf(buf,"Found lonely Sector Effector (lotag 0) at (%d,%d)\n",sp->x,sp->y);
-                                gameexit(buf);
+                                buildprintf("Found lonely Sector Effector (lotag 0) at (%d,%d)\n",sp->x,sp->y);
+                                deletesprite(i);
+                                break;
                             }
                             sp->owner = j;
                         }
@@ -6010,7 +6005,7 @@ char cheatbuf[10];
 unsigned char cheatbuflen;
 void cheats(void)
 {
-    short ch, i, j, k=0, keystate, weapon;
+    short ch, i, j, k=0, weapon;
     static char z=0;
     char consolecheat = 0;  // JBF 20030914
 
@@ -6479,7 +6474,7 @@ if (VOLUMEONE) {
 int nonsharedtimer,screencaptured = 0;
 void nonsharedkeys(void)
 {
-    short i,ch, weapon;
+    short i,ch;
     int j;
 
     if(ud.recstat == 2)
@@ -7187,7 +7182,7 @@ void checkcommandline(int argc, char const * const *argv)
                     case 'Q':
                         buildprintf("Fake multiplayer mode.\n");
                         if( *(++c) == 0) CommandFakeMulti = 1;
-                        else CommandFakeMulti = min(MAXPLAYERS, atol(c));
+                        else CommandFakeMulti = min(MAXPLAYERS, atoi(c));
                         ud.m_coop = ud.coop = 0;
                         ud.m_marker = ud.marker = 1;
                         ud.m_respawn_monsters = ud.respawn_monsters = 1;
@@ -7270,7 +7265,7 @@ void checkcommandline(int argc, char const * const *argv)
                     case 'V':
                         c++;
                         ud.warp_on = 1;
-                        ud.m_volume_number = ud.volume_number = atol(c)-1;
+                        ud.m_volume_number = ud.volume_number = atoi(c)-1;
                         break;
                     case 'x':
                     case 'X':
@@ -7316,7 +7311,7 @@ void cacheicon(void)
 
 void Logo(void)
 {
-    short i,j,soundanm;
+    short soundanm;
     UserInput uinfo;
 
     soundanm = 0;
@@ -7595,7 +7590,7 @@ void Startup(void)
     CONTROL_JoystickEnabled = (UseJoystick && CONTROL_JoyPresent);
     CONTROL_MouseEnabled = (UseMouse && CONTROL_MousePresent);
 
-    inittimer(TICRATE);
+    inittimer(TICRATE, NULL);
 
     //buildprintf("* Hold Esc to Abort. *\n");
     buildprintf("Loading art header.\n");
@@ -7634,7 +7629,7 @@ void Startup(void)
 void sendscore(char *s)
 {
     if(numplayers > 1)
-      genericmultifunction(-1,(unsigned char *)s,strlen(s)+1,5);
+      genericmultifunction(-1,(unsigned char *)s,(int)strlen(s)+1,5);
 }
 
 
@@ -7708,9 +7703,12 @@ void backtomenu(void)
 #include "osdcmds.h"
 #include "grpscan.h"
 
-int shareware = 0;
-int gametype = 0;
+int gametype = GAMEGRP_GAME_DUKE;
 const char *gameeditionname = "Unknown edition";
+
+#if defined RENDERTYPEWIN || (defined RENDERTYPESDL && (defined __APPLE__ || defined HAVE_GTK))
+# define HAVE_STARTWIN
+#endif
 
 #ifdef __AMIGA__
 #include <signal.h>
@@ -7724,10 +7722,13 @@ void app_crashhandler(int signum)
 
 int app_main(int argc, char const * const argv[])
 {
-    int i, j, k, l;
+    int i, j;
     int configloaded;
-    struct grpfile *gamegrp = NULL;
+    struct grpfile const *gamegrp = NULL;
 
+#ifndef HAVE_STARTWIN
+    (void)configloaded;
+#endif
 #ifdef RENDERTYPEWIN
     if (win_checkinstance()) {
         if (!wm_ynbox("JFDuke3D","Another Build game is currently running. "
@@ -7791,27 +7792,27 @@ int app_main(int argc, char const * const argv[])
         }
     } else {
         char *supportdir;
-        char dirpath[BMAX_PATH+1];
+        char dirpath[BMAX_PATH];
         int asperr;
 
         if ((supportdir = Bgetsupportdir(FALSE))) {
-            Bsnprintf(dirpath, sizeof(dirpath), "%s/"
 #if defined(_WIN32) || defined(__APPLE__)
-                "JFDuke3D"
+            const char *dirname = "JFDuke3D";
 #else
-                ".jfduke3d"
+            const char *dirname = ".jfduke3d";
 #endif
-            , supportdir);
+            snprintf(dirpath, sizeof(dirpath), "%s/%s", supportdir, dirname);
             asperr = addsearchpath(dirpath);
             if (asperr == -2) {
                 if (Bmkdir(dirpath, S_IRWXU) == 0) {
                     asperr = addsearchpath(dirpath);
                 } else {
+                    buildprintf("warning: could not create directory %s\n", dirpath);
                     asperr = -1;
                 }
             }
-            if (asperr == 0) {
-                chdir(dirpath);
+            if (asperr == 0 && chdir(dirpath) < 0) {
+                buildprintf("warning: could not change directory to %s\n", dirpath);
             }
             free(supportdir);
         }
@@ -7844,28 +7845,13 @@ int app_main(int argc, char const * const argv[])
     }
 
     ScanGroups();
-    {
-        // Try and identify duke3dgrp in the set of GRPs.
-        struct grpfile *first = NULL;
-        for (gamegrp = foundgrps; gamegrp; gamegrp = gamegrp->next) {
-            if (!gamegrp->ref) continue;     // Not a recognised game file.
-            if (!first) first = gamegrp;
-            if (!Bstrcasecmp(gamegrp->name, duke3dgrp)) {
-                // Found it.
-                break;
-            }
-        }
-        if (!gamegrp && first) {
-            // It wasn't found, so use the first recognised one scanned.
-            gamegrp = first;
-        }
-    }
+    gamegrp = IdentifyGroup(duke3dgrp);
 
     if (netparam) { // -net parameter on command line.
         netsuccess = initmultiplayersparms(endnetparam - netparam, &argv[netparam]);
     }
 
-#if defined RENDERTYPEWIN || (defined RENDERTYPESDL && (defined __APPLE__ || defined HAVE_GTK))
+#ifdef HAVE_STARTWIN
     {
         struct startwin_settings settings;
 
@@ -7932,7 +7918,7 @@ int app_main(int argc, char const * const argv[])
         gametype = gamegrp->game;
         gameeditionname = gamegrp->ref->name;  // Points to static data, so won't be lost in FreeGroups().
     }
-    if (gametype == GAMENAM) {
+    if (gametype == GAMEGRP_GAME_NAM) {
         strcpy(defaultconfilename, "nam.con");
     }
 
@@ -7940,10 +7926,16 @@ int app_main(int argc, char const * const argv[])
 
     buildprintf("GRP file: %s\n", duke3dgrp);
     initgroupfile(duke3dgrp);
+
+    if (!gamegrp) {
+        // Couldn't identify the game by checksum of known released
+        // content, so guess at registered/shareware state by probing
+        // for DOS end screens.
     i = kopen4load("DUKESW.BIN",1);
-    if (i!=-1) {
-        shareware = 1;
+        if (i >= 0) {
+            gametype = GAMEGRP_GAME_DUKESW;
         kclose(i);
+    }
     }
 
     {
@@ -7966,16 +7958,9 @@ int app_main(int argc, char const * const argv[])
     RegisterShutdownFunction( Shutdown );
 
     OSD_SetFunctions(
-        GAME_drawosdchar,
-        GAME_drawosdstr,
-        GAME_drawosdcursor,
-        GAME_getcolumnwidth,
-        GAME_getrowheight,
-        GAME_clearbackground,
-        (int(*)(void))GetTime,
-        GAME_onshowosd
+        NULL, NULL, NULL, NULL, NULL,
+        osdfunc_clearbackground, NULL, osdfunc_onshowosd
     );
-    OSD_SetParameters(0,2, 0,0, 4,0);
     registerosdcommands();
 
     Startup();
@@ -8379,8 +8364,7 @@ char in_menu = 0;
 // extern int syncs[];
 int playback(void)
 {
-    int i,j,k,l,t,tc;
-    short p;
+    int i,j,l;
     char foundemo;
 
     if( ready2send ) return 0;
@@ -8434,8 +8418,6 @@ int playback(void)
 
     KB_FlushKeyboardQueue();
 
-    k = 0;
-
     while (ud.reccnt > 0 || foundemo == 0)
     {
         if(foundemo) while ( totalclock >= (lockclock+TICSPERFRAME) )
@@ -8444,7 +8426,7 @@ int playback(void)
             {
                 i = 0;
                 l = min(ud.reccnt,RECSYNCBUFSIZ);
-                if (kdfread(recsync,sizeof(input)*ud.multimode,l/ud.multimode,recfilep) != l/ud.multimode) {
+                if (kdfread(recsync,sizeof(input)*ud.multimode,l/ud.multimode,recfilep) != (unsigned)(l/ud.multimode)) {
                     buildprintf("Demo %d is corrupt.\n", which_demo-1);
                     foundemo = 0;
                     ud.reccnt = 0;
@@ -8543,20 +8525,6 @@ int playback(void)
         }
     }
     kclose(recfilep);
-
-#if 0
-    // sync checker
-    {
-        unsigned int crcv;
-        initcrc32table();
-        crc32init(&crcv);
-        crc32block(&crcv, (unsigned char *)wall, sizeof(wall));
-        crc32block(&crcv, (unsigned char *)sector, sizeof(sector));
-        crc32block(&crcv, (unsigned char *)sprite, sizeof(sprite));
-        crc32finish(&crcv);
-        buildprintf("Checksum = %08X\n",crcv);
-    }
-#endif
 
     if(ps[myconnectindex].gm&MODE_MENU) goto RECHECK;
     return 1;
@@ -9245,8 +9213,6 @@ char domovethings(void)
 
 void doorders(void)
 {
-    short i;
-
     setview(0,0,xdim-1,ydim-1);
 
     fadepal(0,0,0, 0,63,7);
@@ -9279,7 +9245,7 @@ void doorders(void)
 
 void dobonus(char bonusonly)
 {
-    short t, r, tinc,gfx_offset;
+    short t,gfx_offset;
     int i, y,xfragtotal,yfragtotal;
     short bonuscnt;
     char clockpad;
@@ -9346,7 +9312,7 @@ void dobonus(char bonusonly)
                 uinfo.dir = dir_None;
                 uinfo.button0 = uinfo.button1 = FALSE;
                 KB_FlushKeyboardQueue();
-                totalclock = 0; tinc = 0;
+                totalclock = 0;
                 while( 1 )
                 {
                     clearallviews(0L);
@@ -9590,7 +9556,7 @@ void dobonus(char bonusonly)
     KB_FlushKeyboardQueue();
     uinfo.dir = dir_None;
     uinfo.button0 = uinfo.button1 = FALSE;
-    totalclock = 0; tinc = 0;
+    totalclock = 0;
     bonuscnt = 0;
 
     stopmusic();
@@ -9716,7 +9682,7 @@ void dobonus(char bonusonly)
     nextpage();
     fadepal(0,0,0, 63,0,-1);
     bonuscnt = 0;
-    totalclock = 0; tinc = 0;
+    totalclock = 0;
 
     playerbest = CONFIG_GetMapBestTime(level_file_names[ud.volume_number*11+ud.last_level-1]);
     if (ps[myconnectindex].player_par < playerbest || playerbest < 0) {

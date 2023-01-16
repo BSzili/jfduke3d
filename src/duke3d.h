@@ -38,16 +38,19 @@ extern "C" {
 
 #include "version.h"
 
-extern int conversion,shareware,gametype;
+extern int conversion, gametype;
 extern const char *gameeditionname;
 
-#define GAMEDUKE 0
-#define GAMENAM 1
+enum {
+    GAMEGRP_GAME_DUKE = 0,
+    GAMEGRP_GAME_DUKESW = 1,
+    GAMEGRP_GAME_NAM = 2,
+};
 
-#define VOLUMEALL (shareware==0)
+#define VOLUMEALL (gametype == GAMEGRP_GAME_DUKE || gametype == GAMEGRP_GAME_NAM)
 #define PLUTOPAK (conversion==14)
-#define VOLUMEONE (shareware==1)
-#define NAM (gametype==GAMENAM)
+#define VOLUMEONE (gametype == GAMEGRP_GAME_DUKESW)
+#define NAM (gametype == GAMEGRP_GAME_NAM)
 
 // #define TEN
 // #define BETA
@@ -564,8 +567,6 @@ extern int myaimmode, myaimstat, omyaimstat;
 
 #define IFISGLMODE if (POLYMOST_RENDERMODE_POLYGL())
 #define IFISSOFTMODE if (!POLYMOST_RENDERMODE_POLYGL())
-
-void onvideomodechange(int newmode);
 
 #define TILE_SAVESHOT (MAXTILES-1)
 #define TILE_LOADSHOT (MAXTILES-3)

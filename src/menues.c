@@ -47,7 +47,7 @@ short sh,onbar,deletespot;
 short last_zero,last_fifty,last_threehundred = 0;
 UserInput uinfo;
 
-static char fileselect = 1, menunamecnt, menuname[256][64], curpath[80], menupath[80];
+static char fileselect = 1, menunamecnt, menuname[256][64];
 
 static CACHE1D_FIND_REC *finddirs=NULL, *findfiles=NULL, *finddirshigh=NULL, *findfileshigh=NULL;
 static int numdirs=0, numfiles=0;
@@ -132,7 +132,6 @@ void readsavenames(void)
 
 int loadpheader(char spot,struct savehead *saveh)
 {
-    int i;
     char fn[13];
     int fil;
     int bv;
@@ -185,7 +184,7 @@ int loadplayer(signed char spot)
     char fn[13];
     char mpfn[13];
     char *fnptr;
-    int fil, bv, i, j, x;
+    int fil, bv, i, x;
     int32 nump;
 #ifndef __AMIGA__
     int ptrbuf[MAXTILES];
@@ -312,7 +311,7 @@ int loadplayer(signed char spot)
     if (kdfread(&msy[0],sizeof(int),sizeof(msy)/sizeof(int),fil) != sizeof(msy)/sizeof(int)) goto corrupt;
     if (kdfread((short *)&spriteqloc,sizeof(short),1,fil) != 1) goto corrupt;
     if (kdfread((short *)&spriteqamount,sizeof(short),1,fil) != 1) goto corrupt;
-    if (kdfread((short *)&spriteq[0],sizeof(short),spriteqamount,fil) != spriteqamount) goto corrupt;
+    if (kdfread((short *)&spriteq[0],sizeof(short),spriteqamount,fil) != (unsigned)spriteqamount) goto corrupt;
     if (kdfread(&mirrorcnt,sizeof(short),1,fil) != 1) goto corrupt;
     if (kdfread(&mirrorwall[0],sizeof(short),64,fil) != 64) goto corrupt;
     if (kdfread(&mirrorsector[0],sizeof(short),64,fil) != 64) goto corrupt;
@@ -509,7 +508,7 @@ corrupt:
 
 int saveplayer(signed char spot)
 {
-    int i, j;
+    int i;
     char fn[13];
     char mpfn[13];
     char *fnptr;
@@ -685,7 +684,28 @@ int saveplayer(signed char spot)
     return(0);
 }
 
-static int probe_(int type,int x,int y,int i,int n)
+void onvideomodechange(void)
+{
+    unsigned char *pal;
+
+    if (ScreenBPP > 8) {
+        if (ps[screenpeek].palette == palette ||
+            ps[screenpeek].palette == waterpal ||
+            ps[screenpeek].palette == slimepal)
+            pal = palette;
+        else
+            pal = ps[screenpeek].palette;
+    } else {
+        pal = ps[screenpeek].palette;
+    }
+
+    setbrightness(ud.brightness>>2, pal, 0);
+    restorepalette = 1;
+
+    vscrn();
+}
+
+static int probe_(int type,int x,int y,int i,int n,const int *keys)
 {
     short centre;
 
@@ -736,16 +756,33 @@ static int probe_(int type,int x,int y,int i,int n)
     }
     else
     {
-        if(onbar == 0) return(-probey-2);
-        if (uinfo.dir == dir_West)
+        if (onbar && uinfo.dir == dir_West)
             return(probey);
-        else if (uinfo.dir == dir_East)
+        else if (onbar && uinfo.dir == dir_East)
             return(probey);
-        else return(-probey-2);
+        else
+        {
+            if (keys)
+            {
+                // 'keys' points to a 0-terminated list of scan codes in sequence
+                // to be mapped to probey values.
+                for (int k = 0; keys[k]; k++)
+                {
+                    if (KB_KeyPressed(keys[k])) {
+                        KB_ClearKeyDown(keys[k]);
+                        probey = k;
+                        sound(PISTOL_BODYHIT);
+                        break;
+                    }
+                }
+            }
+            return(-probey-2);
+        }
     }
 }
-int probe(int x,int y,int i,int n) { return probe_(0,x,y,i,n); }
-int probesm(int x,int y,int i,int n) { return probe_(1,x,y,i,n); }
+int probe(int x,int y,int i,int n) { return probe_(0,x,y,i,n,NULL); }
+int probekeys(int x,int y,int i,int n,const int *keys) { return probe_(0,x,y,i,n,keys); }
+int probesm(int x,int y,int i,int n) { return probe_(1,x,y,i,n,NULL); }
 
 int menutext(int x,int y,short s,short p,const char *t)
 {
@@ -1096,7 +1133,6 @@ void menus(void)
     CACHE1D_FIND_REC *dir;
     short c,x,i,s;
     int l,m;
-    char *p = NULL;
 
     getpackets();
 
@@ -1642,16 +1678,16 @@ void menus(void)
                    l = 0;
 cheat_for_port_credits:
                    gametext(160,40-l,"GAME AND ENGINE PORT",0,2+8+16);
-                   p = "Jonathon \"JonoF\" Fowler";
-                   minitext(160-(Bstrlen(p)<<1), 40+10-l, p, 12, 10+16+128);
+                   const char credit1[] = "Jonathon \"JonoF\" Fowler";
+                   minitext(160-(sizeof credit1)*2, 40+10-l, credit1, 12, 10+16+128);
                    
                    gametext(160,60-l,"\"POLYMOST\" 3D RENDERER",0,2+8+16);
                    gametext(160,60+8-l,"NETWORKING, OTHER CODE",0,2+8+16);
-                   p = "Ken \"Awesoken\" Silverman";
-                   minitext(160-(Bstrlen(p)<<1), 60+8+10-l, p, 12, 10+16+128);
+                   const char credit2[] = "Ken \"Awesoken\" Silverman";
+                   minitext(160-(sizeof credit2)*2, 60+8+10-l, credit2, 12, 10+16+128);
 
-                   p = "Icon and startup graphics by Lachlan \"NetNessie\" McDonald";
-                   minitext(160-(Bstrlen(p)<<1), 92-l, p, 12, 10+16+128);
+                   const char credit3[] = "Icon and startup graphics by Lachlan \"NetNessie\" McDonald";
+                   minitext(160-(sizeof credit3)*2, 92-l, credit3, 12, 10+16+128);
 
                    {
                         const char *scroller[] = {
@@ -1688,20 +1724,17 @@ cheat_for_port_credits:
                             "",
                             ""
                         };
-                        const int numlines = sizeof(scroller)/sizeof(char *);
+                        const int numlines = sizeof(scroller)/sizeof(scroller[0]);
                         for (m=0,i=(totalclock/104)%numlines; m<4; m++,i++) {
                             if (i==numlines) i=0;
-                            minitext(160-(Bstrlen(scroller[i])<<1), 100+10+(m*7)-l, scroller[i], 8, 10+16+128);
+                            minitext(160-(int)Bstrlen(scroller[i])*2, 100+10+(m*7)-l, scroller[i], 8, 10+16+128);
                         }
                    }
 
-                   for (i=0;i<2;i++) {
-                       switch (i) {
-                           case 0: p = "Visit http://www.jonof.id.au/jfduke3d for"; break;
-                           case 1: p = "the source code, latest news, and updates of this port."; break;
-                       }
-                       minitext(160-(Bstrlen(p)<<1), 135+10+(i*7)-l, p, 8, 10+16+128);
-                   }
+                   const char credit4[] = "Visit http://www.jonof.id.au/jfduke3d for";
+                   const char credit5[] = "the source code, latest news, and updates of this port.";
+                   minitext(160-(sizeof credit4)*2, 135+10+(0*7)-l, credit4, 8, 10+16+128);
+                   minitext(160-(sizeof credit5)*2, 135+10+(1*7)-l, credit5, 8, 10+16+128);
                    break;
             }
             break;
@@ -1711,7 +1744,7 @@ cheat_for_port_credits:
             rotatesprite(c<<16,28<<16,65536L,0,INGAMEDUKETHREEDEE,0,0,10,0,0,xdim-1,ydim-1);
             if (PLUTOPAK)   // JBF 20030804
                 rotatesprite((c+100)<<16,36<<16,65536L,0,PLUTOPAKSPRITE+2,(sintable[(totalclock<<4)&2047]>>11),0,2+8,0,0,xdim-1,ydim-1);
-            x = probe(c,67,16,6);
+            x = probekeys(c,67,16,6, (int[]){ sc_N, sc_O, sc_L, sc_H, sc_C, sc_Q, 0 });
             if(x >= 0)
             {
                 if( ud.multimode > 1 && x == 0 && ud.recstat != 2)
@@ -1743,8 +1776,6 @@ cheat_for_port_credits:
                     }
                 }
             }
-
-            if(KB_KeyPressed(sc_Q)) cmenu(500);
 
             if(x == -1)
             {
@@ -1784,7 +1815,7 @@ cheat_for_port_credits:
             rotatesprite(c<<16,32<<16,65536L,0,INGAMEDUKETHREEDEE,0,0,10,0,0,xdim-1,ydim-1);
             if (PLUTOPAK)
                 rotatesprite((c+100)<<16,36<<16,65536L,0,PLUTOPAKSPRITE+2,(sintable[(totalclock<<4)&2047]>>11),0,2+8,0,0,xdim-1,ydim-1);
-            x = probe(c,67,16,7);
+            x = probekeys(c,67,16,7, (int[]){sc_N, sc_S, sc_L, sc_O, sc_H, sc_U, sc_Q, 0});
             switch(x)
             {
                 case 0:
@@ -1844,9 +1875,6 @@ cheat_for_port_credits:
                     break;
             }
 
-            if( KB_KeyPressed(sc_Q) )
-                cmenu(500);
-
             if(movesperpacket == 4 && connecthead != myconnectindex)
             {
                 menutext(c,67                  ,SHX(-2),1,"NEW GAME");
@@ -1875,50 +1903,39 @@ if (!VOLUMEALL) {
         case 100:
             rotatesprite(160<<16,19<<16,65536L,0,MENUBAR,16,0,10,0,0,xdim-1,ydim-1);
             menutext(160,24,0,0,"SELECT AN EPISODE");
-//            if(boardfilename[0])
-if (PLUTOPAK)
-                x = probe(160,60,20,5);
-//            else x = probe(160,60,20,4);
-//            if(boardfilename[0])
-else
-                x = probe(160,60,20,VOLUMEONE?3:4);
-//            else x = probe(160,60,20,3);
+            if (VOLUMEONE && PLUTOPAK)
+                x = probekeys(160,60,20,4,(int[]){sc_1, sc_2, sc_3, sc_4, 0});
+            else if (VOLUMEONE)
+                x = probekeys(160,60,20,3,(int[]){sc_1, sc_2, sc_3, 0});
+            else if (PLUTOPAK)
+                x = probekeys(160,60,20,5,(int[]){sc_1, sc_2, sc_3, sc_4, sc_U, 0});
+            else
+                x = probekeys(160,60,20,4,(int[]){sc_1, sc_2, sc_3, sc_U, 0});
             if(x >= 0)
             {
-if (VOLUMEONE) {
-                if(x > 0)
-                    cmenu(20000);
+                if (VOLUMEONE)
+                {
+                    if(x > 0)
+                        cmenu(20000);
+                    else
+                    {
+                        ud.m_volume_number = x;
+                        ud.m_level_number = 0;
+                        cmenu(110);
+                    }
+                }
+                else if ((!PLUTOPAK && x == 3) || (PLUTOPAK && x == 4))
+                {
+                    // User map menu.
+                    currentlist = 1;
+                    cmenu(101);
+                }
                 else
                 {
                     ud.m_volume_number = x;
                     ud.m_level_number = 0;
                     cmenu(110);
                 }
-}
-
-if (!VOLUMEONE) {
-                if(!PLUTOPAK && x == 3 /*&& boardfilename[0]*/)
-                {
-                    //ud.m_volume_number = 0;
-                    //ud.m_level_number = 7;
-            currentlist = 1;
-            cmenu(101);
-                }
-        else if(PLUTOPAK && x == 4 /*&& boardfilename[0]*/)
-                {
-                    //ud.m_volume_number = 0;
-                    //ud.m_level_number = 7;
-            currentlist = 1;
-            cmenu(101);
-                }
-
-                else
-                {
-                    ud.m_volume_number = x;
-                    ud.m_level_number = 0;
-                    cmenu(110);
-                }
-}
             }
             else if(x == -1)
             {
@@ -1929,30 +1946,21 @@ if (!VOLUMEONE) {
             menutext(160,60,SHX(-2),PHX(-2),volume_names[0]);
 
             c = 80;
-if (VOLUMEONE) {
-            menutext(160,60+20,SHX(-3),1,volume_names[1]);
-            menutext(160,60+20+20,SHX(-4),1,volume_names[2]);
-if (PLUTOPAK)
-            menutext(160,60+20+20,SHX(-5),1,volume_names[3]);
-} else {
-            menutext(160,60+20,SHX(-3),PHX(-3),volume_names[1]);
-            menutext(160,60+20+20,SHX(-4),PHX(-4),volume_names[2]);
-if (PLUTOPAK) {
-        menutext(160,60+20+20+20,SHX(-5),PHX(-5),volume_names[3]);
-//            if(boardfilename[0])
-//            {
-                menutext(160,60+20+20+20+20,SHX(-6),PHX(-6),"USER MAP");
-//                gametextpal(160,60+20+20+20+20+3,boardfilename,16+(sintable[(totalclock<<4)&2047]>>11),2);
-//            }
-} else {
-//            if(boardfilename[0])
-//            {
-                menutext(160,60+20+20+20,SHX(-6),PHX(-6),"USER MAP");
-//                gametext(160,60+20+20+20+6,boardfilename,2,2+8+16);
-//            }
-}
-
-}
+            if (VOLUMEONE) {
+                menutext(160,60+20,SHX(-3),1,volume_names[1]);
+                menutext(160,60+20+20,SHX(-4),1,volume_names[2]);
+                if (PLUTOPAK)
+                    menutext(160,60+20+20+20,SHX(-5),1,volume_names[3]);
+            } else {
+                menutext(160,60+20,SHX(-3),PHX(-3),volume_names[1]);
+                menutext(160,60+20+20,SHX(-4),PHX(-4),volume_names[2]);
+                if (PLUTOPAK) {
+                    menutext(160,60+20+20+20,SHX(-5),PHX(-5),volume_names[3]);
+                    menutext(160,60+20+20+20+20,SHX(-6),PHX(-6),"USER MAP");
+                } else {
+                    menutext(160,60+20+20+20,SHX(-6),PHX(-6),"USER MAP");
+                }
+            }
             break;
 
     case 101:
@@ -2071,12 +2079,35 @@ if (PLUTOPAK) {
         }
         break;
         
+        case 103:
+            {
+                char *path;
+                if(boardfilename[0] != 0 && ud.m_level_number == 7 && ud.m_volume_number == 0 )
+                    path = boardfilename;
+                else
+                    path = level_file_names[ (ud.volume_number*11)+ud.level_number];
+
+                c = (320>>1);
+                rotatesprite(c<<16,19<<16,65536L,0,MENUBAR,16,0,10,0,0,xdim-1,ydim-1);
+                menutext(c,24,0,0,"MAP ERROR");
+
+                gametext(160,90,path,0,2+8+16);
+                gametext(160,90+9,"IS NOT COMPATIBLE",0,2+8+16);
+
+                x = probe(186,124,0,0);
+                if(x >= -1)
+                {
+                    backtomenu();
+                    ps[myconnectindex].gm |= MODE_DEMO;
+                }
+            }
+            break;
 
         case 110:
             c = (320>>1);
             rotatesprite(c<<16,19<<16,65536L,0,MENUBAR,16,0,10,0,0,xdim-1,ydim-1);
             menutext(c,24,0,0,"SELECT SKILL");
-            x = probe(c,70,19,4);
+            x = probekeys(c,70,19,4,(int[]){sc_1, sc_2, sc_3, sc_4, 0});
             if(x >= 0)
             {
                 switch(x)
@@ -2109,7 +2140,15 @@ if (PLUTOPAK) {
                 }
 
                 newgame(ud.m_volume_number,ud.m_level_number,ud.m_player_skill);
-                if (enterlevel(MODE_GAME)) backtomenu();
+                switch (enterlevel(MODE_GAME)) {
+                    case 0: break;
+                    case 2:
+                        ps[myconnectindex].gm |= MODE_MENU;
+                        cmenu(103);
+                        break;
+                    default:
+                        backtomenu();
+                }
             }
             else if(x == -1)
             {
@@ -2252,7 +2291,8 @@ if (PLUTOPAK) {
         c = (200 - 18*5)>>1;
 
         onbar = 0;
-        x = probe(160,c,18,5-NAM);
+        if (NAM) x = probekeys(160,c,18,4,(int[]){sc_G, sc_S, sc_V, sc_I, 0});
+        else x = probekeys(160,c,18,5,(int[]){sc_G, sc_S, sc_V, sc_I, sc_P, 0});
 
         switch (x) {
         case -1:
@@ -2330,10 +2370,11 @@ if (PLUTOPAK) {
         c = (200 - 18*5)>>1;
 
         onbar = 0;
+        const int keys[] = {sc_K, sc_M, sc_C, sc_U, sc_S, 0};
         if (probey >= 3)
-            x = probe(160,c+9,18,5);
+            x = probekeys(160,c+9,18,5,keys);
         else
-            x = probe(160,c,18,5);
+            x = probekeys(160,c,18,5,keys);
 
         switch (x) {
         case -1:
@@ -2386,17 +2427,19 @@ if (PLUTOPAK) {
 
             c = (320>>1)-120;
 #if USE_POLYMOST && USE_OPENGL
-            i = 7;
+            i = 6;
+            const int keys[] = {sc_R, sc_V, sc_F, sc_A, sc_B, sc_I, 0};
 #else
             i = 5;
+            const int keys[] = {sc_R, sc_V, sc_F, sc_A, sc_B, 0};
 #endif
             onbar = (probey == 4);
             if (probey <= 2)
-                x = probe(c+6,50,16,i);
+                x = probekeys(c+6,50,16,i,keys);
             else if (probey == 3)
-                x = probe(c+6,50+16+16+22,0,i);
+                x = probekeys(c+6,50+16+16+22,0,i,keys);
             else
-                x = probe(c+6,50+62-16-16-16,16,i);
+                x = probekeys(c+6,50+62-16-16-16,16,i,keys);
 
             if ((probey >= 0 && probey <= 2) && (uinfo.dir == dir_West || uinfo.dir == dir_East)) {
                 sound(PISTOL_BODYHIT);
@@ -2441,8 +2484,6 @@ if (PLUTOPAK) {
                                 gameexit("Failed restoring old video mode.");
                             }
                         }
-                        onvideomodechange(bpp > 8);
-                        vscrn();
 
                         curvidmode = newvidmode; curvidset = newvidset;
 
@@ -2450,6 +2491,8 @@ if (PLUTOPAK) {
                         ScreenWidth = xdim;
                         ScreenHeight = ydim;
                         ScreenBPP = bpp;
+
+                        onvideomodechange();
                     }
                     break;
 
@@ -2460,18 +2503,11 @@ if (PLUTOPAK) {
                 case 5: // Filtering.
                     if (bpp==8) break;
                     switch (gltexfiltermode) {
-                        case 0: gltexfiltermode = 3; break;
+                        case 0: gltexfiltermode = 5; break;
                         case 3: gltexfiltermode = 5; break;
                         case 5: gltexfiltermode = 0; break;
-                        default: gltexfiltermode = 3; break;
+                        default: gltexfiltermode = 5; break;
                     }
-                    gltexapplyprops();
-                    break;
-
-                case 6: // Anisotropy.
-                    if (bpp==8) break;
-                    glanisotropy *= 2;
-                    if (glanisotropy > glinfo.maxanisotropy) glanisotropy = 1;
                     gltexapplyprops();
                     break;
 #endif
@@ -2549,11 +2585,6 @@ if (PLUTOPAK) {
                 default: strcpy(buf,"OTHER"); break;
             }
             menutext(c+154,50+62+16+16,0,bpp==8,buf);
-
-        menutext(c,50+62+16+16+16,0,bpp==8,"ANISOTROPY");
-            if (glanisotropy == 1) strcpy(buf,"NONE");
-            else sprintf(buf,"%d-tap",glanisotropy);
-            menutext(c+154,50+62+16+16+16,0,bpp==8,buf);
 #endif
         break;
 
@@ -2807,7 +2838,6 @@ if (PLUTOPAK) {
                 case 3: Bstrcat(buf, "DOWN"); break;
             }
         } else if (function == 2) {
-            static const char *directions[] = { "UP", "RIGHT", "DOWN", "LEFT" };
 			Bsprintf(buf,"TO %s%s", (whichkey&1)?"DOUBLE-CLICKED ":"", getjoyname(1,whichkey>>1));
         } else if (function == 3) {
             Bsprintf(buf,"TO DIGITAL %s %s",getjoyname(0,whichkey>>1),(whichkey&1)?"POSITIVE":"NEGATIVE");
@@ -3288,7 +3318,7 @@ if (PLUTOPAK) {
             menutext(320>>1,24,0,0,"SOUNDS");
             onbar = ( probey == 2 || probey == 3 );
 
-            x = probe(c,50,16,7);
+            x = probekeys(c,50,16,7,(int[]){sc_S, sc_M, sc_O, sc_U, sc_D, sc_A, sc_F, 0});
             switch(x)
             {
                 case -1:
@@ -3473,13 +3503,13 @@ if (PLUTOPAK) {
 
                 rotatesprite(101<<16,97<<16,65536>>1,512,TILE_SAVESHOT,-32,0,2+4+8+64,0,0,xdim-1,ydim-1);
                 dispnames();
-                rotatesprite((c+67+strlen(&ud.savegame[current_menu-360][0])*4)<<16,(50+12*probey)<<16,32768L-10240,0,SPINNINGNUKEICON+(((totalclock)>>3)%7),0,0,10,0,0,xdim-1,ydim-1);
+                rotatesprite((c+67+(int)strlen(&ud.savegame[current_menu-360][0])*4)<<16,(50+12*probey)<<16,32768L-10240,0,SPINNINGNUKEICON+(((totalclock)>>3)%7),0,0,10,0,0,xdim-1,ydim-1);
                 break;
             }
 
            last_threehundred = probey;
 
-            x = probe(c+68,54,12,10);
+          x = probekeys(c+68,54,12,10,(int[]){sc_1, sc_2, sc_3, sc_4, sc_5, sc_6, sc_7, sc_8, sc_9, sc_0, 0});
 
           if(current_menu == 300)
           {
@@ -4505,7 +4535,7 @@ void endanimvol43(int fr)
 void playanm(const char *fn,char t)
 {
     unsigned char *animbuf, *palptr, palbuf[768];
-    int i, j, k, length=0, numframes=0;
+    int i, j, length=0, numframes=0;
     int32 handle=-1;
     UserInput uinfo;
 

@@ -189,8 +189,7 @@ const char * CONFIG_AnalogNumToName( int32 func )
 
 void CONFIG_SetDefaults( void )
 {
-    int32 i,f;
-    byte k1,k2;
+    int32 i;
 
     FXDevice = 0;
     MusicDevice = 0;
@@ -283,7 +282,7 @@ void CONFIG_SetDefaultKeyDefinitions(int style)
 {
     int numkeydefaults;
     char **keydefaultset;
-    int i, f, k1, k2;
+    int i, f;
 
     if (style) {
         numkeydefaults = sizeof(keydefaults_modern) / sizeof(char *) / 3;
@@ -443,7 +442,7 @@ void CONFIG_ReadKeys( void )
 void CONFIG_SetupMouse( void )
    {
    int32 i;
-   char str[80],*p;
+   char str[80];
    char temp[80];
    int32 function, scale;
 
@@ -510,9 +509,9 @@ void CONFIG_SetupMouse( void )
 void CONFIG_SetupJoystick( void )
    {
    int32 i;
-   char str[80],*p;
+   char str[80];
    char temp[80];
-   int32 function, scale;
+   int32 scale;
 
    if (scripthandle < 0) return;
 
@@ -620,13 +619,21 @@ int32 CONFIG_ReadSetup( void )
     SCRIPT_GetNumber( scripthandle, "Screen Setup", "ScreenBPP", &ScreenBPP);
     if (ScreenBPP < 8) ScreenBPP = 8;
 #ifdef RENDERTYPEWIN
-    SCRIPT_GetNumber( scripthandle, "Screen Setup", "MaxRefreshFreq", (int32*)&maxrefreshfreq);
+    int32 tmpmaxrefreshfreq;
+    SCRIPT_GetNumber( scripthandle, "Screen Setup", "MaxRefreshFreq", &tmpmaxrefreshfreq);
+    win_setmaxrefreshfreq(tmpmaxrefreshfreq);
 #endif
 #if USE_POLYMOST && USE_OPENGL
     SCRIPT_GetNumber( scripthandle, "Screen Setup", "GLTextureMode", &gltexfiltermode);
     SCRIPT_GetNumber( scripthandle, "Screen Setup", "GLAnisotropy", &glanisotropy);
+    SCRIPT_GetNumber( scripthandle, "Screen Setup", "GLMultisample", &glmultisample);
+    SCRIPT_GetNumber( scripthandle, "Screen Setup", "GLMultisampleNvidia", &glnvmultisamplehint);
+    SCRIPT_GetNumber( scripthandle, "Screen Setup", "GLSupersample", &glsampleshading);
     SCRIPT_GetNumber( scripthandle, "Screen Setup", "GLUseTextureCompr", &glusetexcompr);
     SCRIPT_GetNumber( scripthandle, "Screen Setup", "GLUseCompressedTextureCache", &glusetexcache);
+#endif
+#if USE_OPENGL
+    SCRIPT_GetNumber( scripthandle, "Screen Setup", "GLVsync", &glswapinterval);
 #endif
 
     SCRIPT_GetNumber( scripthandle, "Setup", "ForceSetup",&ForceSetup);
@@ -693,6 +700,7 @@ int32 CONFIG_ReadSetup( void )
 void CONFIG_WriteSetup( void )
 {
     int32 dummy;
+    char buf[64];
 
     if (!setupread) return;
     if (scripthandle < 0)
@@ -709,13 +717,19 @@ void CONFIG_WriteSetup( void )
     SCRIPT_PutNumber( scripthandle, "Screen Setup", "ScreenMode",ScreenMode,false,false);
     SCRIPT_PutNumber( scripthandle, "Screen Setup", "ScreenBPP",ScreenBPP,false,false);
 #ifdef RENDERTYPEWIN
-    SCRIPT_PutNumber( scripthandle, "Screen Setup", "MaxRefreshFreq",maxrefreshfreq,false,false);
+    SCRIPT_PutNumber( scripthandle, "Screen Setup", "MaxRefreshFreq",win_getmaxrefreshfreq(),false,false);
 #endif
 #if USE_POLYMOST && USE_OPENGL
     SCRIPT_PutNumber( scripthandle, "Screen Setup", "GLTextureMode",gltexfiltermode,false,false);
     SCRIPT_PutNumber( scripthandle, "Screen Setup", "GLAnisotropy",glanisotropy,false,false);
+    SCRIPT_PutNumber( scripthandle, "Screen Setup", "GLMultisample",glmultisample,false,false);
+    SCRIPT_PutNumber( scripthandle, "Screen Setup", "GLMultisampleNvidia",glnvmultisamplehint,false,false);
+    SCRIPT_PutNumber( scripthandle, "Screen Setup", "GLSupersample",glsampleshading,false,false);
     SCRIPT_PutNumber( scripthandle, "Screen Setup", "GLUseTextureCompr",glusetexcompr,false,false);
     SCRIPT_PutNumber( scripthandle, "Screen Setup", "GLUseCompressedTextureCache", glusetexcache,false,false);
+#endif
+#if USE_OPENGL
+    SCRIPT_PutNumber( scripthandle, "Screen Setup", "GLVsync",glswapinterval,false,false);
 #endif
     SCRIPT_PutNumber( scripthandle, "Screen Setup", "ScreenSize",ud.screen_size,false,false);
     SCRIPT_PutNumber( scripthandle, "Screen Setup", "ScreenGamma",ud.brightness,false,false);
@@ -749,7 +763,7 @@ void CONFIG_WriteSetup( void )
     SCRIPT_PutNumber( scripthandle, "Controls","MouseAimingFlipped",ud.mouseflip,false,false);
     SCRIPT_PutNumber( scripthandle, "Controls","MouseAiming",ud.mouseaiming,false,false);
     //SCRIPT_PutNumber( scripthandle, "Controls","GameMouseAiming",(int32) ps[myconnectindex].aim_mode,false,false);
-    SCRIPT_PutNumber( scripthandle, "Controls","AimingFlag",(long) myaimmode,false,false);
+    SCRIPT_PutNumber( scripthandle, "Controls","AimingFlag",myaimmode,false,false);
     SCRIPT_PutNumber( scripthandle, "Controls","RunKeyBehaviour",ud.runkey_mode,false,false);
     SCRIPT_PutNumber( scripthandle, "Controls","AutoAim",AutoAim,false,false);
     SCRIPT_PutNumber( scripthandle, "Controls","WeaponSwitchMode",ud.weaponswitch,false,false);

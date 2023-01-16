@@ -480,7 +480,7 @@ int transnum(int type)
         return -1;  // error!
     }
 
-    *scriptptr = atol(textptr);
+    *scriptptr = atoi(textptr);
     scriptptr++;
 
     textptr += l;
@@ -1655,12 +1655,11 @@ void loadefs(const char *filenam)
         if( loadfromgrouponly == 1 )
             gameexit("\nMissing con file(s).");
         else {
+            char msg[255];
             const char *msgfmt = "CON file \"%s\" was not found.\n\n"
                 "Check that the \"%s\" file is in the JFDuke3D directory "
                 "and try running the game again.";
-            int bufsz = strlen(msgfmt) + strlen(filenam) + strlen(duke3dgrp);
-            char *msg = Bmalloc(bufsz+1);
-            sprintf(msg, msgfmt, filenam, duke3dgrp);
+            snprintf(msg, sizeof(msg), msgfmt, filenam, duke3dgrp);
             gameexit(msg);
             return;
         }
@@ -1817,7 +1816,7 @@ short furthestangle(short i,short angs)
 
 short furthestcanseepoint(short i,spritetype *ts,int *dax,int *day)
 {
-    short j, hitsect,hitwall,hitspr, angincs, tempang;
+    short j, hitsect,hitwall,hitspr, angincs;
     int hx, hy, hz, d, da;//, d, cd, ca,tempx,tempy,cx,cy;
     spritetype *s = &sprite[i];
 
@@ -1922,7 +1921,7 @@ void alterang(short a)
 void move()
 {
     int l, *moveptr;
-    short j, a, goalang, angdif;
+    short a, goalang, angdif;
     int daxvel;
 
     a = g_sp->hitag;
@@ -2219,7 +2218,6 @@ char parse(void)
         case 5:     //ifcansee
         {
             spritetype *s;
-            short sect;
 
             if(ps[g_p].holoduke_on >= 0)
             {

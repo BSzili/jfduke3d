@@ -31,18 +31,23 @@
 #include "build.h"
 #include "grpscan.h"
 
+enum {
+    GAMEGRP_GAME_DUKE = 0,
+    GAMEGRP_GAME_DUKESW = 1,
+    GAMEGRP_GAME_NAM = 2,
+};
+
 struct grpfile grpfiles[] = {
-    { "Registered Version 1.3d",    0xBBC9CE44, 26524524, GAMEDUKE, "duke3d13.grp",       NULL, NULL },
-    { "Registered Version 1.4",     0xF514A6AC, 44348015, GAMEDUKE, "duke3d14.grp",       NULL, NULL },
-    { "Registered Version 1.5",     0xFD3DCFF1, 44356548, GAMEDUKE, "duke3d.grp",         NULL, NULL },
-    { "20th Anniversary",           0x982AFE4A, 44356548, GAMEDUKE, "duke3d20th.grp",     NULL, NULL },
-    { "Shareware Version",          0x983AD923, 11035779, GAMEDUKE, "duke3dshare.grp",    NULL, NULL },
-    { "Mac Shareware Version",      0xC5F71561, 10444391, GAMEDUKE, "duke3dmacshare.grp", NULL, NULL },
-    // { "Mac Registered Version",     0x00000000, 0,        GAMEDUKE, "duke3dmac.grp",      NULL, NULL },
-    { "NAM",                        0x75C1F07B, 43448927, GAMENAM,  "nam.grp",            NULL, NULL },
+    { "Registered Version 1.3d",    0xBBC9CE44, 26524524, GAMEGRP_GAME_DUKE, "duke3d13.grp",       NULL, NULL },
+    { "Registered Version 1.4",     0xF514A6AC, 44348015, GAMEGRP_GAME_DUKE, "duke3d14.grp",       NULL, NULL },
+    { "Registered Version 1.5",     0xFD3DCFF1, 44356548, GAMEGRP_GAME_DUKE, "duke3d.grp",         NULL, NULL },
+    { "20th Anniversary",           0x982AFE4A, 44356548, GAMEGRP_GAME_DUKE, "duke3d20th.grp",     NULL, NULL },
+    { "Shareware Version",          0x983AD923, 11035779, GAMEGRP_GAME_DUKESW, "duke3dshare.grp",    NULL, NULL },
+    { "Mac Shareware Version",      0xC5F71561, 10444391, GAMEGRP_GAME_DUKESW, "duke3dmacshare.grp", NULL, NULL },
+    { "NAM",                        0x75C1F07B, 43448927, GAMEGRP_GAME_NAM,  "nam.grp",            NULL, NULL },
     { NULL, 0, 0, 0, NULL, NULL, NULL },
 };
-struct grpfile *foundgrps = NULL;
+static struct grpfile *foundgrps = NULL;
 
 #define GRPCACHEFILE "grpfiles.cache"
 static struct grpcache {
@@ -99,7 +104,7 @@ static void FreeGroupsCache(void)
 // Compute the CRC-32 checksum for the contents of an open file.
 static unsigned int ChecksumFile(int fh, struct importgroupsmeta *cbs)
 {
-    int b;
+    ssize_t b;
     unsigned int crc;
 #ifdef __AMIGA__
     const int bufsize = 65536;
@@ -135,7 +140,7 @@ static unsigned int ChecksumFile(int fh, struct importgroupsmeta *cbs)
     do {
         if (cbs && cbs->cancelled(cbs->data)) return 0;
         b = read(fh, buf, sizeof(buf));
-        if (b > 0) crc32block(&crc, buf, b);
+        if (b > 0) crc32block(&crc, buf, (int)b);
     } while (b == sizeof(buf));
     crc32finish(&crc);
 #endif
@@ -174,7 +179,7 @@ int ScanGroups(void)
                 grp = (struct grpfile *)calloc(1, sizeof(struct grpfile));
                 grp->name = strdup(sidx->name);
                 grp->crcval = fg->crcval;
-                grp->size = fg->size;
+                grp->size = (int)fg->size;
                 grp->ref = NULL;
                 grp->next = foundgrps;
                 foundgrps = grp;
@@ -200,7 +205,7 @@ int ScanGroups(void)
         }
 
         {
-            int b, fh;
+            int fh;
             unsigned int crcval;
 
             fh = openfrompath(sidx->name, BO_RDONLY|BO_BINARY, BS_IREAD);
@@ -214,7 +219,7 @@ int ScanGroups(void)
             grp = (struct grpfile *)calloc(1, sizeof(struct grpfile));
             grp->name = strdup(sidx->name);
             grp->crcval = crcval;
-            grp->size = st.st_size;
+            grp->size = (int)st.st_size;
             grp->next = foundgrps;
             foundgrps = grp;
 
@@ -230,8 +235,8 @@ int ScanGroups(void)
             fgg = (struct grpcache *)calloc(1, sizeof(struct grpcache));
             strncpy(fgg->name, sidx->name, BMAX_PATH);
             fgg->crcval = crcval;
-            fgg->size = st.st_size;
-            fgg->mtime = st.st_mtime;
+            fgg->size = (int)st.st_size;
+            fgg->mtime = (int)st.st_mtime;
             fgg->next = usedgrpcache;
             usedgrpcache = fgg;
         }
@@ -254,6 +259,30 @@ int ScanGroups(void)
     }
 
     return 0;
+}
+
+struct grpfile const * IdentifyGroup(const char *grpfilename)
+{
+    struct grpfile *first = NULL, *gamegrp = NULL;
+
+    for (gamegrp = foundgrps; gamegrp; gamegrp = gamegrp->next) {
+        if (!gamegrp->ref) continue;     // Not a recognised game file.
+        if (!first) first = gamegrp;
+        if (!Bstrcasecmp(gamegrp->name, grpfilename)) {
+            // Found a name match.
+            break;
+        }
+    }
+    if (!gamegrp && first) {
+        // It wasn't found, so use the first recognised one scanned.
+        gamegrp = first;
+    }
+    return gamegrp;
+}
+
+struct grpfile const * GroupsFound(void)
+{
+    return foundgrps;
 }
 
 void FreeGroups(void)
@@ -279,7 +308,8 @@ enum {
 // Copy the contents of 'fh' to file 'fname', but only if 'fname' doesn't already exist.
 static int CopyFile(int fh, int size, const char *fname, struct importgroupsmeta *cbs)
 {
-    int ofh, b=0, rv = COPYFILE_OK;
+    int ofh, rv = COPYFILE_OK;
+    ssize_t b=0;
 #ifdef __AMIGA__
     char *buf = malloc(16384);
     if (!buf) {
@@ -373,7 +403,8 @@ static int ImportGroupsFromDir(const char *path, struct importgroupsmeta *cbs)
 {
     BDIR *dir;
     struct Bdirent *dirent;
-    int subpathlen, found = 0, errors = 0;
+    int found = 0, errors = 0;
+    size_t subpathlen;
     char *subpath;
 
     cbs->progress(cbs->data, path);
@@ -402,7 +433,7 @@ static int ImportGroupsFromDir(const char *path, struct importgroupsmeta *cbs)
             }
         }
         else {
-            switch (ImportGroupFromFile(subpath, dirent->size, cbs)) {
+            switch (ImportGroupFromFile(subpath, (int)dirent->size, cbs)) {
                 case IMPORTGROUP_SKIPPED: buildprintf("Skipped %s\n", subpath); break;
                 case IMPORTGROUP_COPIED: buildprintf("Imported %s\n", subpath); found = 1; break;
                 case IMPORTGROUP_ERROR: buildprintf("Error importing %s\n", subpath); errors = 1; break;
@@ -429,7 +460,7 @@ int ImportGroupsFromPath(const char *path, struct importgroupsmeta *cbs)
             case IMPORTGROUP_ERROR: errors = 1; break;
         }
     } else if (st.st_mode & S_IFREG) {
-        switch (ImportGroupFromFile(path, st.st_size, cbs)) {
+        switch (ImportGroupFromFile(path, (int)st.st_size, cbs)) {
             case IMPORTGROUP_SKIPPED: buildprintf("Skipped %s\n", path); break;
             case IMPORTGROUP_COPIED: buildprintf("Imported %s\n", path); found = 1; break;
             case IMPORTGROUP_ERROR: buildprintf("Error importing %s\n", path); errors = 1; break;
