@@ -54,8 +54,8 @@ OURLDFLAGS=
 
 ifneq ($(RELEASE),0)
 	# Default optimisation settings
-	CFLAGS?=-fomit-frame-pointer -O1
-	CXXFLAGS?=-fomit-frame-pointer -O1
+	CFLAGS?=-fomit-frame-pointer -O2
+	CXXFLAGS?=-fomit-frame-pointer -O2
 else
 	CFLAGS?=-Og
 	CXXFLAGS?=-Og
