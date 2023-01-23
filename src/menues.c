@@ -2671,9 +2671,9 @@ if (!VOLUMEALL) {
             } else {
                 sound(PISTOL_BODYHIT);
 
-                KeyboardKeys[function][whichkey] = KB_GetLastScanCode();
+                KeyboardKeys[function][whichkey] = sc;
                 if (function == gamefunc_Show_Console)
-                    OSD_CaptureKey(KB_GetLastScanCode());
+                    OSD_CaptureKey(sc);
                 else
                     CONTROL_MapKey( function, KeyboardKeys[function][0], KeyboardKeys[function][1] );
             }
